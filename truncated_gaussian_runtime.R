@@ -8,7 +8,7 @@ library(tictoc)
 
 # d = 100 ----
 n <- 1000
-d <- 1000
+d <- 100
 mu <- rep(0, d)
 Sigma <- diag(d)
 lb <- rep(0, d)
@@ -23,6 +23,7 @@ tic()
 exact_samples <- cdists::rtmvn(n, Sigma, mu, lb, ub)
 exact_time <- toc()
 exact_ess <- coda::effectiveSize(exact_samples)
+ks.test(exact_samples[, 1], tmvtnorm::rtmvnorm(1000, 0, 1, 0))
 
 init <- rep(1, d)
 f <- diag(d)
