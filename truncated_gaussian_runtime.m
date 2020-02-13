@@ -53,3 +53,24 @@ tic;
 plan = prepare(P, struct('display', 1));
 out = sample(plan, iter);
 t = toc;
+
+%%
+n = 1000;
+dimensions = [100, 500, 1000, 2000, 4000];
+len_dim = length(dimensions);
+times = inf(len_dim, 1);
+samples = cell(len_dim, 1);
+
+for i = 1:len_dim
+    d = dimensions(i);
+    P = make_orthant_problem(d, 0, inf);
+    tic;
+    plan = prepare(P, struct('display', 1));
+    out = sample(plan, iter);
+    t = toc;
+    
+    times(i) = t;
+    samples{i} = out.samples;
+end
+
+save('rhmc_2020_2_12.mat', 'times', 'samples')

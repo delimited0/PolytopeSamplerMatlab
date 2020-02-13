@@ -1,2 +1,4 @@
 *.asv
 paper/
+.DS_Store
+.Rhistory
