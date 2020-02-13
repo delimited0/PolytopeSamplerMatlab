@@ -2,3 +2,6 @@
 paper/
 .DS_Store
 .Rhistory
+*.mat
+*.RData
+*.RDS
