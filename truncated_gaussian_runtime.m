@@ -55,8 +55,11 @@ out = sample(plan, iter);
 t = toc;
 
 %%
-n = 1000;
-dimensions = [100, 500, 1000, 2000, 4000];
+initSampler;
+
+rng(1);
+iter = 1000;
+dimensions = [100, 500, 1000, 2000, 4000, 6000, 8000, 10000];
 len_dim = length(dimensions);
 times = inf(len_dim, 1);
 samples = cell(len_dim, 1);
@@ -73,4 +76,4 @@ for i = 1:len_dim
     samples{i} = out.samples;
 end
 
-save('rhmc_2020_2_12.mat', 'times', 'samples')
+save('rhmc_2020_2_18.mat', 'times', 'samples', 'dimensions')
