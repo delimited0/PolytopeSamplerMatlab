@@ -11,10 +11,9 @@ library(data.table)
 # }
 
 n <- 1000
-dimensions <- c(100, 500, 1000, 2000, 4000, 6000, 8000, 10000)
+# dimensions <- c(100, 500, 1000, 2000, 4000, 6000, 8000, 10000)
+dimensions <- c(100, 500, 1000, 2000, 4000)
 
-
-# Identity covariance
 esses <- vector(mode = "list", length = length(dimensions))
 names(esses) <- dimensions
 samples <- vector(mode = "list", length = length(dimensions))
@@ -24,6 +23,7 @@ names(times) <- dimensions
 dists <- vector(mode = "list", length = length(dimensions))
 names(dists) <- dimensions
 
+# Identity covariance ----
 set.seed(1)
 uni_sample <- tmvtnorm::rtmvnorm(n, 0, 1, 0)
 for (d in dimensions) {
@@ -67,9 +67,47 @@ for (d in dimensions) {
 save(esses, samples, times, dists, file = "experiments_2020_2_18.RData")
 
 
+
+# Dense positive covariance ----
+set.seed(1)
+uni_sample <- tmvtnorm::rtmvnorm(n, 0, 1, 0)
+for (d in dimensions) {
+  print(paste("--- Dimension ", d, " ---"))
+  mu <- rep(0, d)
+  Sigma <- .5 * diag(d) + .5 * rep(1, d) %*% t(rep(1, d))
+  lb <- rep(0, d)
+  ub <- rep(Inf, d)
+  
+  print("Botev")
+  tic()
+  botev_samples <- TruncatedNormal::rtmvnorm(n, mu, Sigma, lb, ub)
+  botev_time <- toc()
+  botev_ess <- coda::effectiveSize(t(botev_samples))
+  botev_dist <- apply(botev_samples, 2,
+                          function(samp) ks.test(samp, uni_sample)$statistic)
+  
+  print("Exact")
+  tic()
+  exact_samples <- cdists::rtmvn(n, Sigma, mu, lb, ub)
+  exact_time <- toc()
+  exact_ess <- coda::effectiveSize(exact_samples)
+  exact_dist <- apply(exact_samples, 2,
+                      function(samp) ks.test(samp, uni_sample)$statistic)
+  
+  entry_name <- as.character(d)
+  esses[[entry_name]] <- data.frame(botev = botev_ess, exact = exact_ess,
+                                    d = d, dim_idx = 1:d)
+  times[[entry_name]] <- data.frame(
+    botev = with(botev_time, toc - tic),
+    exact = with(exact_time, toc - tic), d = d)
+  dists[[entry_name]] <- data.frame(botev = botev_dist, exact = exact_dist,
+                                    d = d, dim_idx = 1:d)
+}
+
 # visualization ----
 library(ggplot2)
 library(ggridges)
+library(magrittr)
 
 rhmc <- R.matlab::readMat("rhmc_2020_2_18.mat")
 rhmc_samples <- 
@@ -106,9 +144,13 @@ ggplot(all_dist_df,
   geom_boxplot(width = 1000) +
   labs(y = "KS distance to univariate truncated normal", x = "dimension")
 
-
-ggplot(rbind(rhmc_time_df, times_df), 
-       aes(x = d, y = value, color = variable)) + 
+dist_df %>%
+  ggplot(aes(x = d, y = value, group = interaction(variable, d), fill = variable)) +
+  geom_boxplot(width = 1000) +
+  labs(y = "KS distance to univariate truncated normal", x = "dimension")
+times_df %>%
+  # rbind(., rhmc_time_df) %>%
+  ggplot(aes(x = d, y = value, color = variable)) + 
   geom_point(size = 3) + geom_line() + 
   labs(x = "Dimension", y = "Seconds") + 
   theme(legend.title = element_blank())

@@ -14,61 +14,66 @@ t = toc;
 
 scatter(out.samples(1, :), out.samples(2, :))
 
-%% d = 100
-P100 = Problem;
-P100.lb=zeros(100,1);
-P100.Aineq = zeros(1, P100.n);
-P100.Aineq(1) = -1;
-P100.Aineq(2) = -1;
-P100.bineq = -1;
-P100.df=@(x) x;
-
-iter = 1000;
-
-tic;
-plan = prepare(P100, struct('display', 1));
-out = sample(plan, iter);
-t = toc;
-
-%% d = 1000
-P1000 = make_orthant_problem(1000, 0, inf);
-
-tic;
-plan = prepare(P1000, struct('display', 1));
-out = sample(plan, iter);
-t = toc;
-
-%% d = 2000
-P2000 = make_orthant_problem(2000, 0, inf);
-
-tic;
-plan = prepare(P2000, struct('display', 1));
-out = sample(plan, iter);
-t = toc;
-
-%% d = big
-P = make_orthant_problem(4000, 0, inf);
-
-tic;
-plan = prepare(P, struct('display', 1));
-out = sample(plan, iter);
-t = toc;
-
 %%
 initSampler;
 
 rng(1);
+% iter = 100000;
+% dimensions = [100, 500, 1000, 2000, 4000, 6000, 8000, 10000];
+n_sizes = [1000, 10000, 100000];
+len_sizes = length(n_sizes);
+dimensions = [100, 500, 1000, 2000];
+len_dim = length(dimensions);
+times = inf(len_dim, len_sizes);
+samples = cell(len_dim, len_sizes);
+
+for i = 1:len_dim
+    for j = 1:len_sizes
+        d = dimensions(i);
+        n = n_sizes(j);
+        
+        lb = zeros(d, 1);
+        ub = inf(d, 1);
+        mu = zeros(d, 1);
+        Sigma = eye(d);
+        P = make_orthant_problem(lb, ub, mu, Sigma);
+        
+        tic;
+        plan = prepare(P);
+        out = sample(plan, n);
+        t = toc;
+
+        times(i, j) = t;
+        samples{i, j} = out.samples';
+    end
+end
+
+save(['rhmc_', date, '.mat'], 'times', 'samples', 'dimensions');
+% save('rhmc_2020_2_18.mat', 'times', 'samples', 'dimensions')
+
+%% dense covariance
+initSampler;
+
+rng(1);
 iter = 1000;
-dimensions = [100, 500, 1000, 2000, 4000, 6000, 8000, 10000];
+% dimensions = [100, 500, 1000, 2000, 4000, 6000, 8000, 10000];
+dimensions = [100, 500, 1000, 2000, 4000, 6000];
 len_dim = length(dimensions);
 times = inf(len_dim, 1);
 samples = cell(len_dim, 1);
 
 for i = 1:len_dim
     d = dimensions(i);
-    P = make_orthant_problem(d, 0, inf);
+    
+    lb = .5 * ones(d, 1);
+    ub = ones(d, 1);
+    
+    mu = zeros(d, 1);
+    Sigma = .5 * eye(d) + .5 * ones(d, 1) * ones(1, d);
+    P = make_orthant_problem(lb, ub, mu, Sigma);
+    
     tic;
-    plan = prepare(P, struct('display', 1));
+    plan = prepare(P);
     out = sample(plan, iter);
     t = toc;
     
@@ -76,4 +81,4 @@ for i = 1:len_dim
     samples{i} = out.samples;
 end
 
-save('rhmc_2020_2_18.mat', 'times', 'samples', 'dimensions')
+save('rhmc_2020_3_4.mat', 'times', 'samples', 'dimensions')

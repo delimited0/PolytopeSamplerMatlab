@@ -51,7 +51,7 @@ end
 %% Create barrier using the df, ddf, dddf
 phi = TwoSidedBarrier(P.lb, P.ub);
 T = P.T; y = P.y;
-T2 = T.^2; T3 = T.*T2;
+T2 = T.^2; T3 = T.*T2;It m
 if max(full(sum(T~=0,2))) > 1
     error('prepare:invalid_T', 'Each row of T in Polytope should contains at most 1 non-zero.');
 end

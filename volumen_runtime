@@ -1,0 +1,8 @@
+initSampler;
+rng(1);
+
+d = 1000;
+n = 1000;
+epsilon = 1e-2
+
+sigma2 = epsilon^2 * n^(-3) * log(n / epsilon)^(-3);

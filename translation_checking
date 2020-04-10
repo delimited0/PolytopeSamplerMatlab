@@ -1,0 +1,26 @@
+initSampler
+
+mu = [0; 0];
+Prec = [[1, 0];[0, 1 / 5]];
+lb = [0; 0];
+ub = [Inf; 3];
+phi = TwoSidedBarrier(lb, ub);
+
+
+
+f = @(x) .5 * (x - mu)' * Prec  * (x - mu);
+df = @(x) Prec * (x - mu);
+
+A = zeros(0, 2);
+b = zeros(0, 1);
+
+ham = Hamiltonian(phi, A, b, f, df, 1);
+
+z = [1e6; 1.5; 1.1128e-6; 1.5807e-1];
+ham.dH(z)
+ham.H(z)
+ham.f(z(1:2))
+baz = phi.HessianInv(z(1:2));
+baz(2, 2)
+foo = phi.HessianInternal(z(1:2));
+foo(1)
